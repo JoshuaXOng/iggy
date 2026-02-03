@@ -31,7 +31,7 @@ use iggy::prelude::{HeaderKey, HeaderValue};
 use once_cell::sync::OnceCell;
 use prost::Message;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, io::Cursor, sync::Arc};
 use strum_macros::{Display, IntoStaticStr};
 use thiserror::Error;
 use tokio::runtime::Runtime;
@@ -46,10 +46,16 @@ pub mod transforms;
 pub use log::LogCallback;
 pub use transforms::Transform;
 
+use crate::{decoders::avro::AvroStreamDecoder, encoders::avro::AvroStreamEncoder};
+
 static RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
 pub fn get_runtime() -> &'static Runtime {
     RUNTIME.get_or_init(|| Runtime::new().expect("Failed to create Tokio runtime"))
+}
+
+fn get_is_valid_avro(bytes: &[u8]) -> bool {
+    apache_avro::Reader::new(Cursor::new(bytes)).is_ok()
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -95,6 +101,7 @@ pub enum Payload {
     Text(String),
     Proto(String),
     FlatBuffer(Vec<u8>),
+    Avro(Vec<u8>),
 }
 
 impl Payload {
@@ -107,6 +114,7 @@ impl Payload {
             Payload::Text(text) => Ok(text.into_bytes()),
             Payload::Proto(text) => Ok(text.into_bytes()),
             Payload::FlatBuffer(value) => Ok(value),
+            Payload::Avro(value) => Ok(value),
         }
     }
 }
@@ -123,6 +131,7 @@ impl std::fmt::Display for Payload {
             Payload::Text(text) => write!(f, "Text({text})"),
             Payload::Proto(text) => write!(f, "Proto({text})"),
             Payload::FlatBuffer(value) => write!(f, "FlatBuffer({} bytes)", value.len()),
+            Payload::Avro(value) => write!(f, "Avro({} bytes)", value.len()),
         }
     }
 }
@@ -144,6 +153,8 @@ pub enum Schema {
     Proto,
     #[strum(to_string = "flatbuffer")]
     FlatBuffer,
+    #[strum(to_string = "avro")]
+    Avro,
 }
 
 impl Schema {
@@ -167,6 +178,12 @@ impl Schema {
                 Err(_) => Ok(Payload::Raw(value)),
             },
             Schema::FlatBuffer => Ok(Payload::FlatBuffer(value)),
+            Schema::Avro => {
+                if !get_is_valid_avro(&value) {
+                    return Err(Error::InvalidAvroPayload);
+                }
+                Ok(Payload::Avro(value))
+            }
         }
     }
 
@@ -177,6 +194,7 @@ impl Schema {
             Schema::Text => Arc::new(TextStreamDecoder),
             Schema::Proto => Arc::new(ProtoStreamDecoder::default()),
             Schema::FlatBuffer => Arc::new(FlatBufferStreamDecoder::default()),
+            Schema::Avro => Arc::new(AvroStreamDecoder),
         }
     }
 
@@ -187,6 +205,7 @@ impl Schema {
             Schema::Text => Arc::new(TextStreamEncoder),
             Schema::Proto => Arc::new(ProtoStreamEncoder::default()),
             Schema::FlatBuffer => Arc::new(FlatBufferStreamEncoder::default()),
+            Schema::Avro => Arc::new(AvroStreamEncoder),
         }
     }
 }
@@ -316,6 +335,8 @@ pub enum Error {
     Serialization(String),
     #[error("Invalid protobuf payload.")]
     InvalidProtobufPayload,
+    #[error("Invalid Avro payload.")]
+    InvalidAvroPayload,
     #[error("Cannot open state file")]
     CannotOpenStateFile,
     #[error("Cannot read state file")]
@@ -324,6 +345,8 @@ pub enum Error {
     CannotWriteStateFile,
     #[error("Invalid state")]
     InvalidState,
+    #[error("Invalid convertion: {0} to {1}.")]
+    InvalidPayloadConversion(Schema, Schema),
     #[error("Connection error: {0}")]
     Connection(String),
     #[error("Cannot store data: {0}")]

@@ -39,7 +39,6 @@ config_dir = "path/to/connectors"
 ```
 
 **Source connector config (connectors/protobuf_source.toml):**
-
 ```toml
 type = "source"
 key = "protobuf"

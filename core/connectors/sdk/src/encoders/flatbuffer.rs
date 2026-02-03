@@ -238,6 +238,8 @@ impl StreamEncoder for FlatBufferStreamEncoder {
             Payload::Raw(data) => self.encode_raw_to_flatbuffer(data),
             Payload::FlatBuffer(data) => Ok(data),
             Payload::Proto(text) => self.encode_text_to_flatbuffer(text),
+            // TODO/WIP(JXO): Avro to flatbuffer (maybe Avro -> JSON -> Flatbuffer?)
+            Payload::Avro(data) => self.encode_raw_to_flatbuffer(data),
         }
     }
 }

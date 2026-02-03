@@ -465,11 +465,17 @@ impl ProtoConvert {
                 // Convert protobuf to raw bytes first, then wrap as FlatBuffer
                 let raw_payload = self.protobuf_to_raw(payload)?;
                 if let Payload::Raw(data) = raw_payload {
+                    // TODO/WIP(JXO): I think these bytes won't be in FlatBuffer format.
                     Ok(Payload::FlatBuffer(data))
                 } else {
                     Err(Error::InvalidPayloadType)
                 }
             }
+            // TODO/WIP(JXO): FlatBuffer does not maintain the schema... Do we do the same...
+            Schema::Avro => Err(Error::InvalidPayloadConversion(
+                self.config.source_format,
+                self.config.target_format,
+            )),
         }
     }
 
@@ -487,6 +493,11 @@ impl ProtoConvert {
                     Err(Error::InvalidPayloadType)
                 }
             }
+            // TODO/WIP(JXO): FlatBuffer does not maintain the schema... Do we do the same...
+            Schema::Avro => Err(Error::InvalidPayloadConversion(
+                self.config.source_format,
+                self.config.target_format,
+            )),
         }
     }
 

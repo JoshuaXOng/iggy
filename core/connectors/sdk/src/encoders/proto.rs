@@ -370,6 +370,9 @@ impl ProtoStreamEncoder {
                 "flatbuffer_size": data.len(),
                 "data": general_purpose::STANDARD.encode(&data)
             }),
+            Payload::Avro(data) => {
+                simd_json::json!({ "data": general_purpose::STANDARD.encode(&data) })
+            }
         };
 
         if let simd_json::OwnedValue::Object(json_map) = json_value {
@@ -624,6 +627,13 @@ impl ProtoStreamEncoder {
                 ),
                 data,
             ),
+            Payload::Avro(data) => (
+                format!(
+                    "{}/google.protobuf.BytesValue",
+                    self.config.format_options.type_url_prefix
+                ),
+                data,
+            ),
         };
 
         let any = Any {
@@ -643,6 +653,10 @@ impl ProtoStreamEncoder {
             Payload::Raw(data) => Ok(data),
             Payload::Proto(text) => Ok(text.into_bytes()),
             Payload::FlatBuffer(data) => Ok(data),
+            // TODO/WIP(JXO): I feel like there is some inconsistentcy
+            // with this and flatbuffer. Like here, we convert to bytes
+            // without changing format.
+            Payload::Avro(data) => Ok(data),
         }
     }
 

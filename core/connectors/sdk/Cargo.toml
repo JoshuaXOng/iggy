@@ -32,6 +32,7 @@ readme = "../../README.md"
 ignored = ["prost"]
 
 [dependencies]
+apache-avro = { version = "0.21.0", features = ["derive"] }
 async-trait = { workspace = true }
 base64 = { workspace = true }
 chrono = { workspace = true }
@@ -41,6 +42,7 @@ iggy = { workspace = true }
 once_cell = { workspace = true }
 postcard = { workspace = true }
 prost = { workspace = true }
+prost-reflect = "0.16.3"
 prost-types = { workspace = true }
 protox = { workspace = true }
 protox-parse = { workspace = true }

@@ -391,6 +391,7 @@ version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36fa98bc79671c7981272d91a8753a928ff6a1cd8e4f20a44c45bd5d313840bf"
 dependencies = [
+ "apache-avro-derive",
  "bigdecimal",
  "bon",
  "digest",
@@ -408,6 +409,19 @@ dependencies = [
  "thiserror 2.0.18",
  "uuid",
  "zstd",
+]
+
+[[package]]
+name = "apache-avro-derive"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a5f1d2499ae9ad7eda0d283bac50140ec75b4d07784124b36dfa21d0b3649cf"
+dependencies = [
+ "darling 0.21.3",
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.114",
 ]
 
 [[package]]
@@ -4191,7 +4205,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "tokio",
  "tower-service",
  "tracing",
@@ -4805,6 +4819,7 @@ dependencies = [
 name = "iggy_connector_sdk"
 version = "0.1.2-edge.1"
 dependencies = [
+ "apache-avro",
  "async-trait",
  "base64 0.22.1",
  "chrono",
@@ -4814,6 +4829,7 @@ dependencies = [
  "once_cell",
  "postcard",
  "prost",
+ "prost-reflect",
  "prost-types",
  "protox",
  "protox-parse",
@@ -7107,7 +7123,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -7146,7 +7162,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.2",
  "tracing",
  "windows-sys 0.60.2",
 ]
